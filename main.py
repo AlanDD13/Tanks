@@ -1,5 +1,5 @@
-# Пользовательский интерфейс
 import pygame
+from levels import level1, level2, level3, level4, level5 
 from random import randint
 pygame.init()
 
@@ -13,6 +13,8 @@ clock = pygame.time.Clock()
 fontUI = pygame.font.Font(None, 30)
 
 imgBrick = pygame.image.load('images/block_brick.png')
+imgWall = pygame.image.load('images/block_armor.png')
+imgBush = pygame.image.load('images/block_bushes.png')
 imgTanks = [
     pygame.image.load('images/tank1.png'),
     pygame.image.load('images/tank2.png'),
@@ -60,6 +62,13 @@ class UI:
                     window.blit(hp_label, (WIDTH - 150, 16))
                     window.blit(tank_label, (WIDTH - 150, 34))
                 i += 1
+
+
+def game_over():
+    print('game_over func')
+    window.fill('black')
+    window.blit()
+    
                 
 
 class Tank:
@@ -73,7 +82,7 @@ class Tank:
         self.hp = 5
         self.shotTimer = 0
 
-        self.moveSpeed = 2
+        self.moveSpeed = 5
         self.shotDelay = 60
         self.bulletSpeed = 5
         self.bulletDamage = 1
@@ -142,7 +151,8 @@ class Tank:
         self.hp -= value
         if self.hp <= 0:
             objects.remove(self)
-            print(self.color, 'dead')
+            print('game over')
+            game_over()
 
 class Bullet:
     def __init__(self, parent, px, py, dx, dy, damage):
@@ -189,22 +199,23 @@ class Bang:
         window.blit(image, rect)
     
 class Block:
-    def __init__(self, px, py, size):
+    def __init__(self, px, py, size, hp, img):
         objects.append(self)
         self.type = 'block'
-
+        self.img= img
         self.rect = pygame.Rect(px, py, size, size)
-        self.hp = 1
+        self.hp = hp
 
     def update(self):
         pass
 
     def draw(self):
-        window.blit(imgBrick, self.rect)
+        window.blit(self.img, self.rect)
 
     def damage(self, value):
         self.hp -= value
-        if self.hp <= 0: objects.remove(self)
+        if self.hp <= 0: 
+            objects.remove(self)
 
 class Bonus:
     def __init__(self, px, py, bonusNum):
@@ -243,7 +254,7 @@ Tank('blue', 100, 275, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygam
 Tank('red', 650, 275, 0, (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_RETURN))
 ui = UI()
 
-for _ in range(50):
+'''for _ in range(50):
     while True:
         x = randint(0, WIDTH // TILE - 1) * TILE
         y = randint(1, HEIGHT // TILE - 1) * TILE
@@ -254,8 +265,19 @@ for _ in range(50):
 
         if not fined: break
 
-    Block(x, y, TILE)
+    Block(x, y, TILE, 1)'''
 
+def create_level(level):
+    for y, row in enumerate(level):
+        for x, char in enumerate(row):
+            if char == '*':
+                Block(x * 32, y * 32, TILE, 50, imgWall)
+            if char == "B":
+                Block(x * 32, y * 32, TILE, 3, imgBrick)
+            elif char == "S":
+                Block(x * 32, y * 32, TILE, 1, imgBush)
+
+create_level(level5)
 bonusTimer = 180
 
 play = True
@@ -265,7 +287,6 @@ while play:
             play = False
 
     keys = pygame.key.get_pressed()
-
     if bonusTimer > 0: bonusTimer -= 1
     else:
         Bonus(randint(50, WIDTH - 50), randint(50, HEIGHT - 50), randint(0, len(imgBonuses) - 1))
