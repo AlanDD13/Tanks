@@ -1,6 +1,8 @@
-import pygame
+import pygame, sys
 from levels import level1, level2, level3, level4, level5 
 from random import randint
+from button import Button
+import time
 pygame.init()
 
 WIDTH, HEIGHT = 800, 600
@@ -12,6 +14,9 @@ clock = pygame.time.Clock()
 
 fontUI = pygame.font.Font(None, 30)
 
+imgStart = pygame.image.load('images/START.png')
+imgCredits = pygame.image.load('images/CREDITS.png')
+imgQuit = pygame.image.load('images/QUIT.png')
 imgBrick = pygame.image.load('images/block_brick.png')
 imgWall = pygame.image.load('images/block_armor.png')
 imgBush = pygame.image.load('images/block_bushes.png')
@@ -64,10 +69,20 @@ class UI:
                 i += 1
 
 
-def game_over():
-    print('game_over func')
-    window.fill('black')
-    window.blit()
+def game_over(color):
+    if color == 'red':
+        wins_text = fontUI.render('BLUE WINS', True, 'Blue')
+    else:
+        wins_text = fontUI.render('RED WINS', True, 'Red')
+    game_over_text = fontUI.render('GAME OVER', True, (200, 200, 200))
+    
+    window.fill((0, 0, 0))
+    window.blit(game_over_text, (WIDTH / 2 - (game_over_text.get_width() / 2), (HEIGHT / 2) - 100))
+    window.blit(wins_text, ((WIDTH / 2 - (wins_text.get_width() / 2)), ((HEIGHT / 2 + wins_text.get_height() * 1.5) - 100)))
+
+    pygame.display.update()
+    time.sleep(10)
+    pygame.quit()
     
                 
 
@@ -152,7 +167,7 @@ class Tank:
         if self.hp <= 0:
             objects.remove(self)
             print('game over')
-            game_over()
+            game_over(self.color)
 
 class Bullet:
     def __init__(self, parent, px, py, dx, dy, damage):
@@ -277,31 +292,76 @@ def create_level(level):
             elif char == "S":
                 Block(x * 32, y * 32, TILE, 1, imgBush)
 
-create_level(level5)
 bonusTimer = 180
 
-play = True
-while play:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            play = False
+def play(level):
+    global keys, bonusTimer
 
-    keys = pygame.key.get_pressed()
-    if bonusTimer > 0: bonusTimer -= 1
-    else:
-        Bonus(randint(50, WIDTH - 50), randint(50, HEIGHT - 50), randint(0, len(imgBonuses) - 1))
-        bonusTimer = randint(120, 240)
-    
-    for bullet in bullets: bullet.update()
-    for obj in objects: obj.update()
-    ui.update()
+    create_level(level)
 
-    window.fill('black')
-    for bullet in bullets: bullet.draw()
-    for obj in objects: obj.draw()
-    ui.draw()
-    
-    pygame.display.update()
-    clock.tick(FPS)
-    
-pygame.quit()
+    play = True
+    while play:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                play = False
+
+        window.fill((0, 0, 0))
+
+        keys = pygame.key.get_pressed()
+        if bonusTimer > 0: bonusTimer -= 1
+        else:
+            Bonus(randint(50, WIDTH - 50), randint(120, HEIGHT - 50), randint(0, len(imgBonuses) - 1))
+            bonusTimer = randint(120, 240)
+            
+        for bullet in bullets: bullet.update()
+        for obj in objects: obj.update()
+        ui.update()
+
+        for bullet in bullets: bullet.draw()
+        for obj in objects: obj.draw()
+        ui.draw()
+        
+        pygame.display.update()
+        clock.tick(FPS)
+        
+    pygame.quit()
+
+def main_menu():
+    window.fill((0, 0, 0))
+    while True:
+        window.fill((0, 0, 0))
+
+        MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+        MENU_TEXT = fontUI.render("MAIN MENU", True, "#b68f40")
+        MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
+
+        PLAY_BUTTON = Button(image=imgStart, pos=(640, 250), 
+                            text_input="PLAY", font=fontUI, base_color="#d7fcd4", hovering_color="White")
+        CREDITS_BUTTON = Button(image=imgCredits, pos=(640, 400), 
+                            text_input="OPTIONS", font=fontUI, base_color="#d7fcd4", hovering_color="White")
+        QUIT_BUTTON = Button(image=imgQuit, pos=(640, 550), 
+                            text_input="QUIT", font=fontUI, base_color="#d7fcd4", hovering_color="White")
+
+        window.blit(MENU_TEXT, MENU_RECT)
+
+        for button in [PLAY_BUTTON, CREDITS_BUTTON, QUIT_BUTTON]:
+            button.changeColor(MENU_MOUSE_POS)
+            button.update(window)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    play(level1)
+                if CREDITS_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    pass
+                if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    pygame.quit()
+                    sys.exit()
+
+        pygame.display.update()
+
+main_menu()
