@@ -1,0 +1,1 @@
+('/Users/alandd/Desktop/programming/Tanks/build/main/PYZ-00.pyz', [])
